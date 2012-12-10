@@ -29,11 +29,14 @@ data WormLikeChain = WLC { lp :: Double
                          , links :: Int
                          }
 
--- | Angle in radians
-type Angle = Double
+type Angle = Double -- ^ Angle in radians
 type Dist = Double
 type Energy = Double
-     
+type Mass = Double
+type Charge = Double -- ^ Electric charge
+type PTrans = Double -- ^ Momentum transfer
+type Intensity = Double -- ^ Scattering Amplitude
+
 type R3 = (Double, Double, Double)
 type P3 = Point R3
 
@@ -102,9 +105,6 @@ bendEnergy :: WormLikeChain -> ChainConfig -> Energy
 bendEnergy (WLC lp links) (ChainC config) =
     V.sum $ V.map energy config
     where energy θ = undefined
-    
--- | Electric charge
-type Charge = Double
 
 -- | Electrostatic self-energy
 selfEnergy :: Charge -> Dist -> ChainPos -> Energy
@@ -121,12 +121,6 @@ pairsWith f v =
         x:xs -> map (f x) xs ++ pairsWith f (V.tail v)
         [] -> []
 
--- | Momentum transfer
-type PTrans = Double
-
--- | Scattering Amplitude
-type Intensity = Double
-
 -- | Generate a random chain
 randomChain :: Int -> RVar ChainEmbedding
 randomChain n =
@@ -136,12 +130,8 @@ randomChain n =
               β <- uniform 0 pi
               return (α, β)
 
--- | Scattering amplitude for given chain configuration
-scattering :: V.Vector P3 -> R3 -> Intensity
-scattering v q =
-    n + 1 + 2*sum (map (\d->cos $ 2*pi * (d <.> q)) $ pairsWith (.-.) v)
-    where n = realToFrac $ V.length v
-
+--- Importance sampling
+-- | Propose a new embedding
 proposal :: ChainEmbedding -> RVar ChainEmbedding
 proposal (ChainE e) = do
     n <- uniform 0 (V.length e - 1)
@@ -149,6 +139,7 @@ proposal (ChainE e) = do
     β <- uniform 0 pi
     return $ ChainE $ e V.// [(n,(α,β))]
     
+-- | Metropolis acceptance
 accept :: (a -> LogFloat) -> a -> a -> RVar a
 accept prob x x'
     | p' > p    = return x'
@@ -156,13 +147,30 @@ accept prob x x'
                      return $ if a then x' else x
     where (p, p') = (prob x, prob x')
 
-evolve' :: Double -> ChainEmbedding -> RVar ChainEmbedding
-evolve' t e = proposal e >>= accept prob e
-    where prob x = logToLogFloat $ -selfEnergy 1 0.1 (embeddingToPositions 1 x) / t
-    
+-- | Monte Carlo sampling of embedding space
 evolve :: Int -> Double -> ChainEmbedding -> RVar [ChainEmbedding]
-evolve n t = iterateM n (evolve' t)
-    
+evolve n t = iterateM n go
+    where go e = proposal e >>= accept prob e
+          prob x = logToLogFloat $ -selfEnergy 1 0.1 (embeddingToPositions 1 x) / t
+
+-- | Scattering amplitude for given chain configuration
+scattering :: V.Vector P3 -> R3 -> Intensity
+scattering v q =
+    n + 1 + 2*sum (map (\d->cos $ 2*pi * (d <.> q)) $ pairsWith (.-.) v)
+    where n = realToFrac $ V.length v
+
+--- Observables
+-- | End to end distance
+endToEndDist :: ChainPos -> Double
+endToEndDist (ChainP p) = V.last p `distance` V.head p
+
+-- | Squared radius of gyration
+gyrationRad :: V.Vector Mass -> ChainPos -> Double
+gyrationRad masses (ChainP e) =
+    weight * V.sum (V.zipWith (\m p->m * p `distanceSq` origin) masses e) - magnitudeSq cm
+    where weight = V.sum masses
+          cm = V.foldl1 (^+^) $ V.zipWith (\m p->m *^ (p .-. origin)) masses e
+
 iterateM :: Monad m => Int -> (a -> m a) -> a -> m [a]
 iterateM 0 _ _ = return []
 iterateM n f x = do
