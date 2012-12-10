@@ -3,7 +3,8 @@ import WormLikeChain
 import Control.Applicative
 import Control.Monad
 
-import qualified Data.Vector.Unboxed as V
+import qualified Data.Vector as V
+import qualified Data.Vector.Unboxed as VU
 
 import Data.Random
 import qualified System.Random.MWC as MWC
@@ -17,9 +18,10 @@ main = do
     rng <- MWC.create
     chain0 <- runRVar (randomChain 10) rng
     chains <- runRVar (evolve 500000 10 chain0) rng
-    --let c = map (endToEndDist . embeddingToPositions 1) chains
-    --let c = map (selfEnergy 1 0.1 . embeddingToPositions 1) chains
-    let c = map (\(ChainP p)->gyrationRad (V.map (const 1) p) (ChainP p)) chains
+    let pos = map (embeddingToPositions 1) chains
+    --let c = map endToEndDist pos
+    --let c = map (selfEnergy 1 0.1) pos
+    let c = map (\(ChainP p)->gyrationRad (VU.map (const 1) p) (ChainP p)) pos
     renderableToWindow (toRenderable $ histogram $ V.fromList c) 640 480
     
 histogram values = layout
