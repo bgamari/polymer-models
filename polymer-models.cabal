@@ -16,8 +16,8 @@ cabal-version:       >=1.8
 
 library
   exposed-modules:     WormLikeChain
-  build-depends:       base ==4.6.*, vector ==0.10.*, vector-th-unbox ==0.1.*, vector-space ==0.8.*, vector-space-points ==0.1.*, newtype ==0.2.*, random-fu ==0.2.*, logfloat
+  build-depends:       base ==4.6.*, vector ==0.10.*, vector-th-unbox ==0.2.*, vector-space ==0.8.*, vector-space-points ==0.1.*, newtype ==0.2.*, random-fu ==0.2.*, logfloat
 
 executable Main
   Main-is:             Main.hs
-  build-depends:       base ==4.6.*, vector ==0.10.*, vector-th-unbox ==0.1.*, vector-space ==0.8.*, vector-space-points ==0.1.*, newtype ==0.2.*, random-fu ==0.2.*, data-accessor, Chart ==0.16.*, Chart-gtk ==0.16.*, chart-histogram ==0.2.*, mwc-random ==0.12.*, logfloat
+  build-depends:       base ==4.6.*, vector ==0.10.*, vector-th-unbox ==0.2.*, vector-space ==0.8.*, vector-space-points ==0.1.*, newtype ==0.2.*, random-fu ==0.2.*, data-accessor, Chart ==0.16.*, Chart-gtk ==0.16.*, chart-histogram ==0.2.*, mwc-random ==0.12.*, logfloat

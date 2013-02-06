@@ -21,7 +21,7 @@ import Data.Random.Distribution.Bernoulli
 import Data.Number.LogFloat hiding (realToFrac)
 
 derivingUnbox "Point"
-              [d| instance (V.Unbox a) => Unbox' (Point (a,a,a)) (a,a,a) |]
+              [t| (V.Unbox a) => Point (a,a,a) -> (a,a,a) |]
               [| \(P x)->x |]
               [| P |]
 
