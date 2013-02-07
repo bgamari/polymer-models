@@ -16,13 +16,14 @@ import Graphics.Rendering.Chart.Plot.Histogram
 
 main = do
     rng <- MWC.create
-    chain0 <- runRVar (randomChain 10) rng
-    chains <- runRVar (evolve 500000 10 chain0) rng
+    chain0 <- runRVar (randomChain 100) rng
+    let energy = selfEnergy 1 0.1 . embeddingToPositions 1
+    chains <- runRVar (evolve 500000 energy 10 chain0) rng
     let pos = map (embeddingToPositions 1) chains
     --let c = map endToEndDist pos
     --let c = map (selfEnergy 1 0.1) pos
     let c = map (\(ChainP p)->gyrationRad (VU.map (const 1) p) (ChainP p)) pos
-    renderableToWindow (toRenderable $ histogram $ V.fromList c) 640 480
+    renderableToWindow (toRenderable $ histogram c) 640 480
     
 histogram values = layout
     where hist = plot_hist_values  ^= values

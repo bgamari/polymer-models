@@ -148,10 +148,13 @@ accept prob x x'
     where (p, p') = (prob x, prob x')
 
 -- | Monte Carlo sampling of embedding space
-evolve :: Int -> Double -> ChainEmbedding -> RVar [ChainEmbedding]
-evolve n t = iterateM n go
+-- 'evolve n energy beta e0' produces 'n' configurations evolved from
+-- initial chain configuration 'e0' 'under energy function 'energy' at
+-- temperature 'T = 1 / beta / k_B'
+evolve :: Int -> (ChainEmbedding -> Energy) -> Energy -> ChainEmbedding -> RVar [ChainEmbedding]
+evolve n energy beta = iterateM n go
     where go e = proposal e >>= accept prob e
-          prob x = logToLogFloat $ -selfEnergy 1 0.1 (embeddingToPositions 1 x) / t
+          prob x = logToLogFloat $ -energy x * beta
 
 -- | Scattering amplitude for given chain configuration
 scattering :: V.Vector P3 -> R3 -> Intensity
